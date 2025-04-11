@@ -1,4 +1,4 @@
 @echo off
 echo Installing Splunk Universal Forwarder...
-msiexec.exe /i splunkforwarder-9.3.2-0dbe88b9ca7f-x86-release.msi DEPLOYMENT_SERVER="104.247.188.164:8089" AGREETOLICENSE=Yes /quiet
+msiexec.exe /i splunkforwarder-9.3.2-0dbe88b9ca7f-x86-release.msi DEPLOYMENT_SERVER="x.x.x.164:8089" AGREETOLICENSE=Yes /quiet
 echo Installation complete.

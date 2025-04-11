@@ -1,0 +1,70 @@
+#installation splunk uf on linux
+#!/bin/bash
+
+# Splunk Universal Forwarder'ı kurmak için kullanılan URL ve dosya yolu
+SPLUNK_TAR_URL="https://download.splunk.com/products/universalforwarder/releases/9.3.2/linux/splunkforwarder-9.3.2-d8bb32809498-Linux-x86_64.tgz"
+SPLUNK_INSTALL_DIR="/opt/splunkforwarder"
+DEPLOYMENT_SERVER="104.247.188.164"  # Deployment Server IP veya domain adı
+DEPLOYMENT_SERVER_PORT="8089"  # Deployment Server port numarası
+
+# Admin kullanıcı adı ve şifre
+ADMIN_USER="admin"
+ADMIN_PASSWORD="changeme"  # Şifreyi burada belirleyebilirsiniz
+
+# Splunk kullanıcısını oluştur
+if ! id "splunkfwd" &>/dev/null; then
+    echo "Splunk kullanıcısı mevcut değil, oluşturuluyor..."
+    useradd -m -s /bin/bash splunkfwd
+else
+    echo "Splunk kullanıcısı zaten mevcut."
+fi
+
+
+#fw kapat
+systemctl stop ufw
+echo "Firewall durduruluyor"
+
+#fw disable et
+systemctl disable ufw
+echo "Firewall disable ediliyor"
+
+# Splunk Universal Forwarder kurulum dosyasını indir
+wget -O /tmp/splunkforwarder.tgz $SPLUNK_TAR_URL
+
+# Kurulum dosyasını aç
+tar -zxvf /tmp/splunkforwarder.tgz -C /opt
+
+# Kurulum sonrası izinleri ayarla
+chown -R splunkfwd:splunkfwd $SPLUNK_INSTALL_DIR
+
+# Admin kullanıcı bilgilerini içeren user-seed.conf dosyasını oluştur
+cat <<EOL > $SPLUNK_INSTALL_DIR/etc/system/local/user-seed.conf
+[user_info]
+USERNAME = $ADMIN_USER
+PASSWORD = $ADMIN_PASSWORD
+EOL
+
+# Lisans kabulünü sağla ve Splunk'ı başlat
+$SPLUNK_INSTALL_DIR/bin/splunk start --accept-license --answer-yes --no-prompt
+
+# Deployment Server bilgilerini deploymentclient.conf dosyasına ekle
+cat <<EOL > $SPLUNK_INSTALL_DIR/etc/system/local/deploymentclient.conf
+[target-broker:deploymentServer]
+targetUri = $DEPLOYMENT_SERVER:$DEPLOYMENT_SERVER_PORT
+EOL
+
+# Splunk forwarder'ı yeniden başlat
+$SPLUNK_INSTALL_DIR/bin/splunk stop 
+
+#enable boot-start
+$SPLUNK_INSTALL_DIR/bin/splunk enable boot-start
+
+#start
+$SPLUNK_INSTALL_DIR/bin/splunk start
+
+#status
+$SPLUNK_INSTALL_DIR/bin/splunk status
+
+# Bağlantı testi yapmak için telnet veya nc komutlarıyla bağlantıyı test edebilirsiniz.
+echo "Deployment Server'a bağlanılabilirliği test etmek için aşağıdaki komutu çalıştırabilirsiniz:"
+echo "telnet $DEPLOYMENT_SERVER $DEPLOYMENT_SERVER_PORT"

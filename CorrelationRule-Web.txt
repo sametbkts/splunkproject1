@@ -1,0 +1,68 @@
+Unauthorized Web.config Access – MITRE T1552.001
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as http_user_agent  
+    from datamodel=Web  
+    where  (Web.uri_query ="*web.config*" OR Web.url ="*web.config*")   
+    by _time, Web.src, Web.http_method, Web.url, Web.uri_query
+
+Python-Based HTTP Scanning Detected – MITRE T1595/T1071.001
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as http_user_agent  
+    from datamodel=Web  
+    where Web.http_user_agent IN ("python*", "*urllib*", "*requests*", "*http.client*", "*httpx*","*aiohttp*","*scrapy*","*mechanize*","*selenium*","*pycurl*","*simplehttpclient*")  
+    by _time, Web.src, Web.http_method, Web.url, Web.uri_query
+
+
+Cross-Site Scripting(XSS) Attempt Detected on IIS – MITRE T1059.007/T1189
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as http_user_agent  
+    from datamodel=Web  
+    where Web.uri_query!="NULL"  
+    AND Web.uri_query IN ("*<script>*", "*javascript:*", "*onerror=*", "<img src=", "*document.cookie*")  
+    by _time, Web.src, Web.http_method, Web.url, Web.uri_query
+
+SQLmap Scan Detected on IIS – MITRE T1190
+Nuclei Scanner Activity Detected – MITRE T1595.002
+XXE Attack Detected in XML Payload – MITRE T1190
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as user_agent values(Web.http_referrer) as referrer values(Web.url) as url 
+  from datamodel=Web 
+  where Web.http_method="POST" AND Web.url IN ("*.xml", "*.php", "*.asp", "*.aspx") 
+  by Web.src, Web.dest, _time 
+| `drop_dm_object_name("Web")` 
+| search url="*<?xml*" OR url="*<!DOCTYPE*" OR url="*ENTITY*" OR url="*SYSTEM*" OR url="*file://*" OR url="*http://*" OR url="*ftp://*"
+| table _time, src, dest, url, user_agent, referrer, count
+
+
+Boolean-Based SQL Injection Detected – MITRE T1190
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as http_user_agent  
+    from datamodel=Web  
+    where Web.uri_query!="NULL"  
+    AND Web.uri_query IN ("' OR 1=1 --", "' OR '1'='1' --", "' OR 'x'='x' --", "1' AND '1'='1' --", "1' AND 1=1 --", "1\" AND 1=1 --")  
+    by _time, Web.src, Web.http_method, Web.url, Web.uri_query
+	
+URL-Encoded SQL Injection Payload Detected – MITRE T1190
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as http_user_agent 
+    from datamodel=Web  
+    where Web.uri_query!="NULL"  
+    AND Web.uri_query IN ("%27", "%22", "%3D", "%23", "%2D%2D", "%3B", "%2F%2A", "%2A%2F")  
+    by _time, Web.src, Web.http_method, Web.url, Web.uri_query
+
+Database Metadata Enumeration Detected on IIS – MITRE T1211
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as http_user_agent  
+    from datamodel=Web  
+    where Web.uri_query!="NULL"  
+    AND Web.uri_query IN ("information_schema.tables", "information_schema.columns", "database()", "current_user()", "@@hostname", "@@datadir", "load_file('/etc/passwd')")  
+    by _time, Web.src, Web.http_method, Web.url, Web.uri_query
+
+Web-Based Shell Execution Attempt Detected – MITRE T1059/T1218/T110
+
+| tstats `security_content_summariesonly` count values(Web.http_user_agent) as user_agent values(Web.url) as url values(Web.src) as src_ip  
+from datamodel=Web  
+where Web.http_method="POST" AND Web.url IN ("*.asp", "*.aspx", "*.php")  
+AND Web.uri_query IN ("cmd.exe*", "powershell*", "certutil*", "wget*", "curl*")  
+by _time, Web.src, Web.dest  
+| table _time, src_ip, Web.dest, url, user_agent, count

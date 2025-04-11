@@ -4,7 +4,7 @@
 # Splunk Universal Forwarder'ı kurmak için kullanılan URL ve dosya yolu
 SPLUNK_TAR_URL="https://download.splunk.com/products/universalforwarder/releases/9.3.2/linux/splunkforwarder-9.3.2-d8bb32809498-Linux-x86_64.tgz"
 SPLUNK_INSTALL_DIR="/opt/splunkforwarder"
-DEPLOYMENT_SERVER="104.247.188.164"  # Deployment Server IP veya domain adı
+DEPLOYMENT_SERVER="x.x.x.164"  # Deployment Server IP veya domain adı
 DEPLOYMENT_SERVER_PORT="8089"  # Deployment Server port numarası
 
 # Admin kullanıcı adı ve şifre
